@@ -85,30 +85,28 @@ export const useGetMetaDataRole = () => {
 
 
 
-
-export const usePublishUpload = (newUpload: PublishUploadType) => {
-    const toast = useToast();
+export const usePublishUpload = () => {
+    const toast = useToast()
 
     return useMutation({
-        mutationFn: () => mutationPublishUpload(newUpload), // your API call
+        mutationFn: (newUpload: PublishUploadType) => mutationPublishUpload(newUpload),
         onSuccess: () => {
             toast({
                 title: "Upload published successfully",
                 status: "success",
-                duration: null,
                 isClosable: true,
                 position: "top",
-            });
+            })
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
+            const message = err instanceof Error ? err.message : "Unknown error"
             toast({
                 title: "Unable to publish upload",
-                description: err.message,
+                description: message,
                 status: "error",
-                duration: null,
                 isClosable: true,
                 position: "top",
-            });
+            })
         },
-    });
-};
+    })
+}

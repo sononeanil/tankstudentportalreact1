@@ -1,28 +1,28 @@
 import { Box, Button, Input, Text, useToast, VStack } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { uploadFile } from "../../Api"
+import { uploadFile } from "../../Api";
 import { Link, Outlet, useNavigate } from "react-router";
 
-
 const Upload = () => {
-
     const useFileUpload = () => {
         return useMutation({
-            mutationFn: (formData) => uploadFile(formData),
+            mutationFn: (formData: FormData) => uploadFile(formData),
         });
     };
 
-
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const toast = useToast();
-
     const mutation = useFileUpload();
+    const navigate = useNavigate();
 
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files.length > 0) {
+            setSelectedFile(event.target.files[0]);
+        }
     };
-    const nevigate = useNavigate();
+
+
     const handleUpload = () => {
         if (!selectedFile) {
             toast({
@@ -42,20 +42,20 @@ const Upload = () => {
             onSuccess: (data) => {
                 toast({
                     title: "Upload Successful",
-                    description: data.erpSystemResponse.message,
+                    description: data?.erpSystemResponse?.message || "File uploaded successfully",
                     status: "success",
                     duration: 3000,
                     isClosable: true,
-                },
-
-
-                );
-                nevigate("/db2/upload/uploadedFileList");
+                });
+                navigate("/db2/upload/uploadedFileList");
             },
             onError: (error) => {
                 toast({
                     title: "Upload Failed",
-                    description: error.response?.data?.erpSystemResponse?.message || "Something went wrong",
+                    description:
+                        error?.message ||
+
+                        "Something went wrong",
                     status: "error",
                     duration: 4000,
                     isClosable: true,
@@ -64,13 +64,16 @@ const Upload = () => {
         });
     };
 
-
     return (
         <>
             <Box p={6} maxW="500px" mx="auto" borderWidth="1px" borderRadius="lg" shadow="md">
                 <VStack spacing={4} align="stretch">
                     <Input type="file" onChange={handleFileChange} />
-                    <Button colorScheme="teal" onClick={handleUpload} isLoading={mutation.isPending}>
+                    <Button
+                        colorScheme="teal"
+                        onClick={handleUpload}
+                        isLoading={mutation.isPending}
+                    >
                         Upload
                     </Button>
                     {mutation.isError && <Text color="red.500">Error: {mutation.error.message}</Text>}
@@ -78,12 +81,9 @@ const Upload = () => {
                 </VStack>
                 <Link to={"/db2/upload/uploadedFileList"}>uploadedFileList</Link>
             </Box>
-
-            <Outlet>
-
-            </Outlet>
+            <Outlet />
         </>
-    )
-}
+    );
+};
 
-export default Upload
+export default Upload;

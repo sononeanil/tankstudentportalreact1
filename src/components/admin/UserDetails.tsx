@@ -1,6 +1,6 @@
-import { use, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule, RowNode } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useGetUserList } from "../../tanstack/tanstack";
@@ -34,7 +34,7 @@ const UserDetails = () => {
     const deleteSelected = () => {
         if (!gridApi) return;
         const selectedNodes = gridApi.getSelectedNodes();
-        const selectedIds = selectedNodes.map((node: UserType) => node.data.id);
+        const selectedIds = selectedNodes.map((node: RowNode) => (node.data as UserType).id);
         selectedIds.forEach((id: number | string) => {
             deleteUserMutation.mutate(id);
         });

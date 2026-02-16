@@ -1,4 +1,4 @@
-import { Box, Td, Text, TableContainer, TableCaption, Badge } from "@chakra-ui/react"
+import { Box, Td, Text, TableContainer, Badge } from "@chakra-ui/react"
 import { Table } from "@chakra-ui/react"
 import {
 

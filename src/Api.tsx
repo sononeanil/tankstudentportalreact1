@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { customer, post } from "./types/postType";
 
-import type { LoginType, MetaDataType, StudentType, UpdateUserRoleType, UploadType, UserRoleType, UserType } from "./types/userType";
+import type { LoginType, MetaDataType, PublishUploadType, StudentType, UpdateUserRoleType, UserType } from "./types/userType";
 
 const api = axios.create({
     baseURL: "https://dummyjson.com"
@@ -134,11 +134,22 @@ export const getAllStudentForParent = async (id: string | number): Promise<Stude
     }
 }
 
-export const uploadFile = async (formData) => {
-    const response = await apiErpSystem.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
+export const uploadFile = async (formData: FormData) => {
+
+    try {
+        const response = await apiErpSystem.post("/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return response.data;
+    }
+    catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+            if (error.response) {
+                throw new Error(error.response.data?.erpSystemResponse?.message || error.response.data);
+            }
+        }
+        throw new Error("Network error " + error);
+    }
 };
 
 export const getAllUploadedFilesList = async (): Promise<string[]> => {
@@ -157,9 +168,9 @@ export const getAllUploadedFilesList = async (): Promise<string[]> => {
     }
 }
 
-export const mutationCreateUpload = async (newUpload: UploadType) => {
+export const mutationCreateUpload = async (newUpload: PublishUploadType) => {
     try {
-        const response = await apiErpSystem.post("/upload", newUpload);
+        await apiErpSystem.post("/upload", newUpload);
     }
     catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -173,10 +184,10 @@ export const mutationCreateUpload = async (newUpload: UploadType) => {
 }
 
 
-export const mutationPublishUpload = async (newUpload: UploadType) => {
+export const mutationPublishUpload = async (newUpload: PublishUploadType) => {
     try {
         // console.log("Inside mutationPublishUpload Api.tsx", newUpload);
-        const response = await apiErpSystem.post("/upload/publishUpload", newUpload);
+        await apiErpSystem.post("/upload/publishUpload", newUpload);
     }
     catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -212,7 +223,7 @@ export const getMetaDataRole = async (key: string): Promise<MetaDataType[]> => {
 }
 export const getUserRole = async (email: string) => {
     try {
-        alert("Inside getUserRole Api.tsx: " + email);
+        // alert("Inside getUserRole Api.tsx: " + email);
         const response = await apiErpSystem.get(`/admin/userrole?userEmailId=${email}`);
         console.log("getUserRole response:", response);
         return response.data; // ✅ success case

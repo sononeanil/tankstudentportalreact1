@@ -1,11 +1,10 @@
-import { Button, Checkbox, Container, FormControl, FormErrorMessage, FormLabel, GridItem, HStack, Input, Select, SimpleGrid, Text, Toast, useToast, VStack } from "@chakra-ui/react"
+import { Button, Container, FormControl, FormErrorMessage, FormLabel, GridItem, Input, SimpleGrid, useToast } from "@chakra-ui/react"
 import { useMutation } from "@tanstack/react-query"
 import { mutationCreateStudent } from "../../Api";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { studentSchema, userSchema, type StudentType, type UserType } from "../../types/userType";
-import { useNavigate } from "react-router";
+import { studentSchema, type StudentType } from "../../types/userType";
 
 const data = [
     { name: "Jan", value: 30 },
@@ -21,7 +20,6 @@ const data = [
 
 
 const EnrollStudent = () => {
-    const navigate = useNavigate();
     const toast = useToast();
 
     const userInfoString = localStorage.getItem("loggedInUser");
@@ -83,7 +81,7 @@ const EnrollStudent = () => {
         register,
         handleSubmit,
         reset,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<StudentType>({
         resolver: zodResolver(studentSchema),
     });

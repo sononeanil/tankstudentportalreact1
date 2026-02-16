@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table"
 import { delteCustomer, getCustomerList } from "../Api";
 import type { customer } from "../types/postType";
-import { DeleteIcon } from "lucide-react";
 
 const columhelper = createColumnHelper<customer>()
 
@@ -37,7 +36,7 @@ const columns: ColumnDef<customer>[] = [
     columhelper.display({
         id: "action",
         header: "actions",
-        cell: ({ row }) => <DeleteButton id={row.original.id}>Delete Item</DeleteButton>
+        cell: ({ row }) => <DeleteButton id={row.original.id} />
 
     })
 
@@ -45,22 +44,15 @@ const columns: ColumnDef<customer>[] = [
 
 const DeleteButton = ({ id }: { id: number }) => {
     const queryClient = useQueryClient();
-
     const deleteClientMutation = useMutation({
         mutationFn: async (customerId: number) => delteCustomer(customerId),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["getCustomerList"]
-            })
-        }
+            queryClient.invalidateQueries({ queryKey: ["getCustomerList"] });
+        },
     });
 
-    return (<button onClick={() => deleteClientMutation.mutate(id)}>Delete </button>)
-}
-
-
-
-
+    return <button onClick={() => deleteClientMutation.mutate(id)}>Delete Item</button>;
+};
 
 
 const TanstackTable = () => {

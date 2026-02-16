@@ -1,5 +1,3 @@
-import { ChakraProvider } from "@chakra-ui/react";
-import React from "react";
 import ChakraUi2 from "./ui/ChakraUi2";
 
 

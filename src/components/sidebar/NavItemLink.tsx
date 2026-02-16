@@ -1,5 +1,5 @@
 
-const NavItemLink = ({ link }) => {
+const NavItemLink = () => {
     return (
         <div>NavItemLink</div>
     )

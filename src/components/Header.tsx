@@ -1,4 +1,4 @@
-import { Avatar, Box, Flex, HStack, IconButton, Image, Input, InputGroup } from "@chakra-ui/react"
+import { Avatar, Box, HStack, IconButton, Image, Input, InputGroup } from "@chakra-ui/react"
 import SidebarDrawer from "./SidebarDrawer"
 
 import ChildStudyPlatform1 from "./images/ChildStudyPlatform1.png";

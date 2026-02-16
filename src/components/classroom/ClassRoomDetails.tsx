@@ -1,5 +1,5 @@
 import { Badge, Box, Divider, Heading, List, ListIcon, ListItem, Text, VStack } from "@chakra-ui/react";
-import { useLocation, useParams } from "react-router";
+import { useParams } from "react-router";
 import { classroomDescriptions, classroomTypeList } from "../../types/ClassroomTypes";
 import { CheckCircleIcon } from "@chakra-ui/icons";
 

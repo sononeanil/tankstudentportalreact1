@@ -3,7 +3,7 @@ import { Box, Button, Checkbox, CheckboxGroup, FormControl, FormLabel, GridItem,
 import { useState } from "react";
 
 import { getUserRole, updateUserRoles } from "../../Api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { UpdateUserRoleType } from "../../types/userType";
 
 const Role = () => {
@@ -34,12 +34,12 @@ const Role = () => {
         const formData = new FormData(e.currentTarget);
         const newEmail = formData.get("email") as string;
         setEmail(newEmail);
-        alert("Email entered: " + newEmail);
+        // alert("Email entered: " + newEmail);
 
         try {
             const response = await mutateAsync(newEmail);
             console.log("User role fetched successfully for:", response);
-            alert(email + "," + response.erpSystemResponse.userPOJO?.userId);
+            // alert(email + "," + response.erpSystemResponse.userPOJO?.userId);
             setUserId(response.erpSystemResponse.userPOJO?.userId || -1);
             // console.log("Mutation result:", result.erpSystemResponse.userPOJO, "222222");
         } catch (err) {

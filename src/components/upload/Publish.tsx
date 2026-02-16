@@ -9,12 +9,12 @@ const Publish = () => {
 
     const useFileUpload = () => {
         return useMutation({
-            mutationFn: (formData) => uploadFile(formData),
+            mutationFn: (formData: FormData) => uploadFile(formData),
         });
     };
 
 
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     // const [targetDirectory, setTargetDirectory] = useState(null);
     const [studentClass, setStudentClass] = useState("");
     const [board, setBoard] = useState("");
@@ -28,8 +28,8 @@ const Publish = () => {
 
     const mutation = useFileUpload();
 
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSelectedFile(event.target.files?.[0] || null);
     };
     const nevigate = useNavigate();
     const handleUpload = () => {
@@ -65,7 +65,7 @@ const Publish = () => {
             onError: (error) => {
                 toast({
                     title: "Upload Failed",
-                    description: error.response?.data?.erpSystemResponse?.message || "Something went wrong",
+                    description: error.message || "Something went wrong",
                     status: "error",
                     duration: 4000,
                     isClosable: true,

@@ -1,6 +1,4 @@
 import { GridItem, Heading, Card, CardHeader, CardBody, Stack, Grid, Box } from "@chakra-ui/react"
-import { ChartArea } from "lucide-react";
-import { data } from "react-router";
 
 import { AreaChart, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Area, Bar, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from "recharts"
 
@@ -181,15 +179,17 @@ const LandingPage = () => {
                                             data={dataDonutChart}
                                             cx="50%"
                                             cy="50%"
-                                            innerRadius={40}   // 👈 Creates the donut hole
+                                            innerRadius={40}
                                             outerRadius={70}
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
-                                            {dataDonutChart.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            {dataDonutChart.map((entry, idx) => (
+                                                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} name={entry.name} />
+
                                             ))}
                                         </Pie>
+
                                         <Tooltip />
                                         <Legend verticalAlign="bottom" height={36} />
 

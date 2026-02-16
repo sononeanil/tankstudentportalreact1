@@ -1,7 +1,6 @@
 import { Box, Button, Card, CardBody, CardFooter, CardHeader, Divider, Flex, HStack, SimpleGrid, Text } from "@chakra-ui/react"
 import { classroomTypeList } from "../types/ClassroomTypes"
 import { EditIcon, ViewIcon } from "@chakra-ui/icons"
-import type { px } from "framer-motion"
 import { useNavigate } from "react-router"
 
 

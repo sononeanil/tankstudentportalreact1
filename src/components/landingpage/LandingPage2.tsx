@@ -1,5 +1,4 @@
-import { Box, Container, Flex, Heading, HStack, Link, LinkBox, LinkOverlay, SimpleGrid, Text, VStack } from "@chakra-ui/react";
-import { color } from "framer-motion";
+import { Flex, HStack, SimpleGrid, Text, VStack } from "@chakra-ui/react";
 import { AiOutlineHome, AiOutlineMail } from "react-icons/ai";
 import { MdPlayCircleOutline } from "react-icons/md";
 import { FaInfoCircle } from "react-icons/fa";
@@ -7,7 +6,6 @@ import DataTable from "./DataTable";
 import LandingPageCorousel from "./LandingPageCorousel";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { Outlet } from "react-router";
 const LandingPage2 = () => {
 
     const landingPageData = [

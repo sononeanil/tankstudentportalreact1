@@ -4,7 +4,7 @@ import { Text } from "@chakra-ui/react";
 
 const PersonalDetails = () => {
     const userInfoString = localStorage.getItem("loggedInUser");
-    const { firstName, lastName, email, city, country } = userInfoString ? JSON.parse(userInfoString) : null;
+    const { firstName, lastName, email, city, country, role } = userInfoString ? JSON.parse(userInfoString) : null;
 
     return (
         <>
@@ -37,8 +37,8 @@ const PersonalDetails = () => {
                             <Text><strong>Last Name:</strong> {lastName}</Text>
                             <Text><strong>User Login Id:</strong> {email}</Text>
                             <Text><strong>User Number:</strong> 123456</Text>
-                            <Text colSpan={2}><strong>Email:</strong> {email}</Text>
-                            <Text colSpan={2}><strong>Address:</strong> SP Lane, Mulshi</Text>
+                            <Text ><strong>Email:</strong> {email}</Text>
+                            <Text ><strong>Address:</strong> SP Lane, Mulshi</Text>
                             <Text><strong>City:</strong> {"city"}</Text>
                             <Text><strong>Country:</strong> {"country"}</Text>
                         </SimpleGrid>
@@ -77,12 +77,12 @@ const PersonalDetails = () => {
                             <Text>{email}</Text>
                         </Box>
 
-                        <Box colSpan={2}>
+                        <Box >
                             <Text fontWeight="bold" color="gray.600">Email:</Text>
                             <Text>{email}</Text>
                         </Box>
 
-                        <Box colSpan={2}>
+                        <Box >
                             <Text fontWeight="bold" color="gray.600">Address:</Text>
                             <Text>SP Lane, Mulshi</Text>
                         </Box>
@@ -113,7 +113,7 @@ const PersonalDetails = () => {
 
                         {/* Role Badge */}
                         <Badge colorScheme="purple" variant="solid">
-                            {"role" || "Student"}
+                            {role || "Role Not Available"}
                         </Badge>
 
                         {/* Email */}
@@ -147,7 +147,7 @@ const PersonalDetails = () => {
                             <Text>123456</Text>
                         </Box>
 
-                        <Box colSpan={2}>
+                        <Box >
                             <Text fontWeight="bold" color="gray.600">Address:</Text>
                             <Text>SP Lane, Mulshi</Text>
                         </Box>

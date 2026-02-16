@@ -31,7 +31,8 @@ export const studentSchema = z.object({
     lastName: z.string().min(3),
     nickName: z.string().min(3).optional().or(z.literal("")),
     email: z.email().optional().or(z.literal("")),
-    age: z.coerce.number().min(1, "Age is madatory and has to be greater than zero"),
+    // age: z.coerce.number().min(1, "Age is madatory and has to be greater than zero"),
+    age: z.number().min(1, "Age is madatory and has to be greater than zero"),
     classEntrolled: z.string().min(3).optional().or(z.literal("")),
     middleName: z.string().min(3).optional().or(z.literal("")),
     gender: z.string().min(3),
@@ -47,15 +48,10 @@ export type StudentType = z.infer<typeof studentSchema>;
 
 export const publishUpload = z.object({
     id: z.number().optional(),
-
-    // uploadedBy: z.string().transform(valueEntered => valueEntered === "" ? undefined : valueEntered),
-    // uploadedDate: z.string().transform(valueEntered => valueEntered === "" ? undefined : valueEntered),
-    type: z.string().transform(valueEntered => valueEntered === "" ? undefined : valueEntered),
-    // standard: z.string().transform(valueEntered => valueEntered === "" ? undefined : valueEntered),
-    // subject: z.string().transform(valueEntered => valueEntered === "" ? undefined : valueEntered),
-    term: z.string().transform(valueEntered => valueEntered === "" ? undefined : valueEntered),
-    // board: z.string().transform(valueEntered => valueEntered === "" ? undefined : valueEntered)
+    type: z.string().optional(),
+    term: z.string().optional(),
 })
+
 
 export type PublishUploadType = z.infer<typeof publishUpload>;
 

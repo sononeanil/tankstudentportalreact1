@@ -12,7 +12,7 @@ export type post = {
 
 export const createCustomerSchema = z.object(
     {
-        id: number().optional(),
+        id: number(),
         name: z.string().min(3),
         phonenumber: z.string().min(10),
         location: z.string().optional(),

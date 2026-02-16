@@ -1,4 +1,4 @@
-import { Text, Container, Flex, VStack, GridItem, FormControl, FormLabel, Input, Button, SimpleGrid, Textarea, Select, Checkbox, Heading, FormErrorMessage, Alert, AlertIcon, useToast } from "@chakra-ui/react"
+import { Text, Container, Flex, VStack, GridItem, FormControl, FormLabel, Input, Button, SimpleGrid, Select, Checkbox, Heading, FormErrorMessage, useToast } from "@chakra-ui/react"
 import { useMutation } from "@tanstack/react-query"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { loginSchema, userSchema, type LoginType, type UserType } from "../types/userType"
@@ -38,7 +38,7 @@ const LoginSignup = () => {
     }
     const toast = useToast();
 
-    const { mutateAsync, isError, error, isSuccess } = useMutation({
+    const { mutateAsync } = useMutation({
         mutationFn: mutationCreateUser,
         onError: (err: any) => {
             toast({
@@ -85,10 +85,10 @@ const LoginSignup = () => {
         // alert("Create newUser");
     }
 
-    const { register, handleSubmit, reset, formState: { errors, isSubmitting } }
+    const { register, handleSubmit, reset, formState: { errors } }
         = useForm<UserType>({ resolver: zodResolver(userSchema) })
 
-    const { register: loginFormRegister, handleSubmit: loginFormHandleSubmit, formState: { errors: loginFormErrors, isSubmitting: loginFormIsSubmitting } }
+    const { register: loginFormRegister, handleSubmit: loginFormHandleSubmit, formState: { errors: loginFormErrors } }
         = useForm<LoginType>({ resolver: zodResolver(loginSchema) })
 
 

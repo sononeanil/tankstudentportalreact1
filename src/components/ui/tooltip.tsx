@@ -1,46 +1,20 @@
-import { Tooltip as ChakraTooltip, Portal } from "@chakra-ui/react"
-import * as React from "react"
+"use client"
 
-export interface TooltipProps extends ChakraTooltip.RootProps {
-  showArrow?: boolean
-  portalled?: boolean
-  portalRef?: React.RefObject<HTMLElement | null>
-  content: React.ReactNode
-  contentProps?: ChakraTooltip.ContentProps
-  disabled?: boolean
+import { Tooltip, Button } from "@chakra-ui/react"
+
+export const CustomTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
+  return (
+    <Tooltip label={label} hasArrow>
+      {children}
+    </Tooltip>
+  )
 }
 
-export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
-  function Tooltip(props, ref) {
-    const {
-      showArrow,
-      children,
-      disabled,
-      portalled = true,
-      content,
-      contentProps,
-      portalRef,
-      ...rest
-    } = props
-
-    if (disabled) return children
-
-    return (
-      <ChakraTooltip.Root {...rest}>
-        <ChakraTooltip.Trigger asChild>{children}</ChakraTooltip.Trigger>
-        <Portal disabled={!portalled} container={portalRef}>
-          <ChakraTooltip.Positioner>
-            <ChakraTooltip.Content ref={ref} {...contentProps}>
-              {showArrow && (
-                <ChakraTooltip.Arrow>
-                  <ChakraTooltip.ArrowTip />
-                </ChakraTooltip.Arrow>
-              )}
-              {content}
-            </ChakraTooltip.Content>
-          </ChakraTooltip.Positioner>
-        </Portal>
-      </ChakraTooltip.Root>
-    )
-  },
-)
+// Example usage
+export default function Example() {
+  return (
+    <CustomTooltip label="Click to save">
+      <Button colorScheme="blue">Save</Button>
+    </CustomTooltip>
+  )
+}
