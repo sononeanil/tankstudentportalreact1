@@ -82,13 +82,9 @@ const EnrollStudent = () => {
         handleSubmit,
         reset,
         formState: { errors },
-    } = useForm<StudentType>({
+    } = useForm({
         resolver: zodResolver(studentSchema),
     });
-
-
-
-
 
     return (
         <>
@@ -169,7 +165,7 @@ const EnrollStudent = () => {
                         <GridItem colSpan={1}>
                             <FormControl isInvalid={!!errors.age}>
                                 <FormLabel>age </FormLabel>
-                                <Input placeholder="Enter your age" {...register("age")} />
+                                <Input placeholder="Enter your age" {...register("age", { valueAsNumber: true })} />
                                 <FormErrorMessage>
                                     {errors.age && errors.age.message}
                                 </FormErrorMessage>

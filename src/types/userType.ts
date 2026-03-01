@@ -23,6 +23,9 @@ export const userSchema = z.object({
 
 export type UserType = z.infer<typeof userSchema>;
 
+
+
+// Schema
 export const studentSchema = z.object({
     id: z.number().optional(),
     loginId: z.string(),
@@ -30,9 +33,8 @@ export const studentSchema = z.object({
     firstName: z.string().min(3, "firstName Mandatory attribute with more than 3 characters"),
     lastName: z.string().min(3),
     nickName: z.string().min(3).optional().or(z.literal("")),
-    email: z.email().optional().or(z.literal("")),
-    // age: z.coerce.number().min(1, "Age is madatory and has to be greater than zero"),
-    age: z.number().min(1, "Age is madatory and has to be greater than zero"),
+    email: z.string().email().optional().or(z.literal("")),
+    age: z.coerce.number().min(1, "Age is mandatory and has to be greater than zero"),
     classEntrolled: z.string().min(3).optional().or(z.literal("")),
     middleName: z.string().min(3).optional().or(z.literal("")),
     gender: z.string().min(3),
@@ -43,8 +45,8 @@ export const studentSchema = z.object({
     parentId: z.string().min(1).optional().or(z.literal("")),
 });
 
+// ✅ Infer type from schema (output type)
 export type StudentType = z.infer<typeof studentSchema>;
-
 
 export const publishUpload = z.object({
     id: z.number().optional(),
