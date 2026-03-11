@@ -49,7 +49,6 @@ const LoginSignup = () => {
                 isClosable: true,
                 position: "top",
             });
-
         },
         onSuccess: () => {
             // console.log("Registration successful");
@@ -284,7 +283,6 @@ const LoginSignup = () => {
                             </GridItem>
 
                             <GridItem colSpan={2}>
-
                                 <FormControl isInvalid={!!errors.email}>
                                     <FormLabel>email </FormLabel>
                                     <Input

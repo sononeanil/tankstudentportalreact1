@@ -31,6 +31,10 @@ import UploadedFileList from './components/upload/UploadedFileList.tsx'
 import Publish from './components/upload/Publish.tsx'
 import Role from './components/role/Role.tsx'
 import UserDetails from './components/admin/UserDetails.tsx'
+import ZoomMeeting from './components/zoom/ZoomMeeting.tsx'
+import CreateZoom from './components/zoom/CreateZoom.tsx'
+import StudentDashboard from './components/student/StudentDashboard.tsx'
+import UpcomingMeeting from './components/teacher/UpcomingMeeting.tsx'
 
 
 const router = createBrowserRouter([
@@ -69,10 +73,16 @@ const router = createBrowserRouter([
     }, {
       path: "/db2/publish",
       element: <Publish></Publish>
+    }, {
+      path: "/db2/zoomMeeting",
+      element: <ZoomMeeting></ZoomMeeting>
+    }, {
+      path: "/db2/createZoomMeeting",
+      element: <CreateZoom></CreateZoom>
     },
     {
       path: "/db2/school",
-      element: <LandingPage2></LandingPage2>
+      element: <StudentDashboard></StudentDashboard>
     },
     {
       path: "/db2/editRole",
@@ -96,11 +106,25 @@ const router = createBrowserRouter([
     },
     {
       path: "/db2/classTeacher",
-      element: <ClassTeacher></ClassTeacher>
+      element: <ClassTeacher></ClassTeacher>,
+      children: [
+        {
+          path: "/db2/classTeacher/publish",
+          element: <Publish></Publish>
+        },
+        {
+          path: "/db2/classTeacher/createZoomMeeting",
+          element: <CreateZoom></CreateZoom>
+        }, {
+          path: "/db2/classTeacher/myUpcomingMeetings",
+          element: <UpcomingMeeting></UpcomingMeeting>
+        }
+      ]
     },
     {
       path: "/db2/loginSignup",
       element: <LoginSignup></LoginSignup>
+
     },
     {
       path: "/db2/profile",

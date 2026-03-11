@@ -23,11 +23,13 @@ const Dashboard2 = () => {
         { lable: "Teacher", icon: <FaChalkboardTeacher />, path: "classTeacher" },
         { lable: "School", icon: <FaSchool />, path: "school" },
         { lable: "Profile", icon: <AiOutlineUser />, path: "profile" },
-        { lable: "Landing Page", icon: <MdWeb />, path: "landingpage2" },
+        // { lable: "Landing Page", icon: <MdWeb />, path: "landingpage2" },
         { lable: "Upload Assignment", icon: <MdWeb />, path: "upload" },
         { lable: "Publish", icon: <MdWeb />, path: "publish" },
         { lable: "Edit Role", icon: <MdWeb />, path: "editRole" },
-        { lable: "User Details", icon: <AiOutlineUser />, path: "userdetails" }
+        { lable: "User Details", icon: <AiOutlineUser />, path: "userdetails" },
+        { lable: "SetUp Zoom Meeting", icon: <AiOutlineUser />, path: "createZoomMeeting" },
+        { lable: "Zoom Meeting", icon: <AiOutlineUser />, path: "zoomMeeting" }
     ];
     const navigate = useNavigate();
     const handleLogout = () => {
