@@ -2,8 +2,8 @@ import axios from "axios";
 import type { CreateZoomMeetingType, startZoomMeetingType } from "../types/zoom";
 
 const apiAdmin = axios.create({
-    baseURL: "http://localhost:8080/erpsystem"
-    // baseURL: "https://tankstudentportalrestapi-production.up.railway.app/erpsystem"
+    // baseURL: "http://localhost:8080/erpsystem"
+    baseURL: "https://tankstudentportalrestapi-production.up.railway.app/erpsystem"
 })
 
 apiAdmin.interceptors.request.use(
