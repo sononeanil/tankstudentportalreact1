@@ -6,10 +6,11 @@ import { FaInfoCircle } from "react-icons/fa";
 import LandingPageCorousel from "./LandingPageCorousel";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import ViewCourse from "../teacher/ViewCourse";
 const LandingPage2 = () => {
 
     const landingPageData = [
-        { id: 1, title: "Welcome to Anil Sonone Student Portal", description: "Explore our features and services.", color: "#dde80fff", gradient: "linear-gradient(#dde80fff, #0c98f0ff)", value: 1000, icon: <AiOutlineHome /> },
+        { id: 1, title: "Welcome to Anil Sonone Teachers Platform", description: "Explore our features and services.", color: "#dde80fff", gradient: "linear-gradient(#dde80fff, #0c98f0ff)", value: 1000, icon: <AiOutlineHome /> },
         { id: 2, title: "Get Started", description: "Learn how to use our platform effectively.", color: "#b00ccdff", gradient: "linear-gradient(#dde80fff, #0c98f0ff)", value: 2000, icon: <MdPlayCircleOutline /> },
         { id: 3, title: "Contact Us", description: "Reach out for support or inquiries.", color: "#37e80fff", gradient: "linear-gradient(#dde80fff, #ee7dcaff)", value: 2000, icon: <AiOutlineMail /> },
         { id: 4, title: "About Us", description: "Discover more about our mission and values.", color: "#dde80fff", gradient: "linear-gradient(#dde80fff, rgba(248, 203, 233, 1))", value: 5000, icon: <FaInfoCircle /> }
@@ -20,6 +21,8 @@ const LandingPage2 = () => {
 
         <>
             <LandingPageCorousel></LandingPageCorousel>
+
+            <ViewCourse></ViewCourse>
 
             <SimpleGrid columns={4} gap={5} >
                 {landingPageData.map(data => (
