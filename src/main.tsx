@@ -39,6 +39,10 @@ import UpcomingMeeting from './components/teacher/UpcomingMeeting.tsx'
 import PublishCourse from './components/teacher/PublishCourse.tsx'
 import ListAllCourse from './components/teacher/ListAllCourse.tsx'
 import RegisterCourse from './components/teacher/RegisterCourse.tsx'
+import GenerateNotes from './components/notes/GenerateNotes.tsx'
+import NewNotes from './components/notes/NewNotes.tsx'
+import ViewNotes from './components/notes/ViewNotes.tsx'
+import ChapterNotesView from './components/notes/ChapterNotesView.tsx'
 
 
 const router = createBrowserRouter([
@@ -81,6 +85,28 @@ const router = createBrowserRouter([
     }, {
       path: "/db2/publish",
       element: <Publish></Publish>
+    }, {
+      path: "/db2/generateNotesImage",
+      element: <Publish></Publish>
+    }, {
+      path: "/db2/generateNotesPDF",
+      element: <GenerateNotes />,
+      children: [
+        {
+          path: "newNotes", // ✅ relative
+          element: <NewNotes />
+        },
+        {
+          path: "viewNotes", // ✅ relative
+          element: <ViewNotes />,
+          children: [
+            {
+              path: "chapterNotes", // ✅ REQUIRED
+              element: <ChapterNotesView />
+            }
+          ]
+        }
+      ]
     }, {
       path: "/db2/zoomMeeting",
       element: <ZoomMeeting></ZoomMeeting>
