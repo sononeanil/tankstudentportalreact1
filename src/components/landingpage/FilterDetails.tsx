@@ -11,34 +11,30 @@ import {
     Heading,
     Badge,
     Divider,
-    Icon
-} from "@chakra-ui/react";
-import { useMemo, useRef, useState } from "react";
-import {
-    getChapterList,
-
-    getChapterNotes
-} from "../../service/ApiNotes";
-import ReactFlow, { Background, BackgroundVariant, Controls, MiniMap, ReactFlowProvider } from "reactflow";
-import 'reactflow/dist/style.css';
-import "reactflow/dist/style.css";
-import html2pdf from "html2pdf.js";
-import { toPng } from "html-to-image";
-import {
+    Icon,
+    SimpleGrid,
+    Tag,
+    TagLabel,
+    Collapse,
     Menu,
     MenuButton,
     MenuList,
-    MenuItem
+    MenuItem,
+    Progress,
+    Tooltip
 } from "@chakra-ui/react";
-
+import { useMemo, useRef, useState, useEffect } from "react";
+import { getChapterList, getChapterNotes } from "../../service/ApiNotes";
+import ReactFlow, { Background, BackgroundVariant, Controls, MiniMap, ReactFlowProvider } from "reactflow";
+import 'reactflow/dist/style.css';
+import html2pdf from "html2pdf.js";
+import { toPng } from "html-to-image";
 import { PdfLayout } from "../notes/PdfLayout";
 import { parseMindMap } from "../../service/ParseMindMap";
 import VennView from "../notes/VennView";
 import { buildFlow, nodeTypes } from "../notes/FlowChartNode";
 import FlowChartControlPanel from "../notes/FlowChartControlPanel";
-import { StarIcon } from "@chakra-ui/icons";
-
-
+import { StarIcon, ChevronDownIcon, ChevronUpIcon, DownloadIcon, CheckCircleIcon, WarningIcon } from "@chakra-ui/icons";
 
 const FilterDetails = () => {
     const pdfRef = useRef<HTMLDivElement>(null);
@@ -48,6 +44,14 @@ const FilterDetails = () => {
 
     const [selectedChapter, setSelectedChapter] = useState("");
     const [contentType, setContentType] = useState("Notes");
+    const [flippedCards, setFlippedCards] = useState<Record<number, boolean>>({});
+    const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+
+    // 🎮 Gamification States
+    const [xp, setXp] = useState(0);
+    const [streak, setStreak] = useState(3); // Mocked starter streak
+    const [readCards, setReadCards] = useState<Record<number, boolean>>({});
+
     const queryClient = useQueryClient();
 
     const isCached = !!queryClient.getQueryData([
@@ -56,34 +60,25 @@ const FilterDetails = () => {
         selectedChapter,
     ]);
 
-
-
-    // 🔹 First API → Get Chapters
-    const {
-        data: chapters,
-        isLoading,
-        isError
-    } = useQuery({
+    const { data: chapters, isLoading, isError } = useQuery({
         queryKey: ["chapters", decodedType],
         queryFn: () => getChapterList({ key: decodedType! }),
         enabled: !!decodedType,
     });
 
-    const {
-        data: contentData,
-        isFetching: contentLoading,
-        refetch: fetchChapterDetails,
-    } = useQuery({
+    const { data: contentData, isFetching: contentLoading, refetch: fetchChapterDetails } = useQuery({
         queryKey: ["chapterContent", decodedType, selectedChapter],
-        queryFn: () =>
-            getChapterNotes({
-                key: decodedType!,
-                chapter: selectedChapter,
-            }),
+        queryFn: () => getChapterNotes({ key: decodedType!, chapter: selectedChapter }),
         enabled: false,
-        staleTime: Infinity, // 💥 cache forever (no refetch)
+        staleTime: Infinity,
     });
 
+    // Reset chapter progress when switching chapters
+    useEffect(() => {
+        setFlippedCards({});
+        setQuizAnswers({});
+        setReadCards({});
+    }, [selectedChapter]);
 
     const flowData = useMemo(() => {
         if (contentType === "Flow Chart" && contentData?.mindMap) {
@@ -93,128 +88,100 @@ const FilterDetails = () => {
         return { nodes: [], edges: [] };
     }, [contentData, contentType]);
 
+    // Calculate real-time completion percentage
+    const overallProgress = useMemo(() => {
+        if (!contentData) return 0;
+        const totalNotes = contentData.notes?.length || 0;
+        const totalQuestions = contentData.questions?.length || 0;
+        const totalTasks = totalNotes + totalQuestions;
+
+        if (totalTasks === 0) return 0;
+
+        const completedNotes = Object.keys(readCards).length;
+        const completedQuestions = Object.keys(quizAnswers).length;
+
+        return Math.round(((completedNotes + completedQuestions) / totalTasks) * 100);
+    }, [contentData, readCards, quizAnswers]);
+
+    const toggleCard = (index: number) => {
+        setFlippedCards(prev => ({ ...prev, [index]: !prev[index] }));
+
+        // Award XP on first time exploring this card
+        if (!readCards[index]) {
+            setReadCards(prev => ({ ...prev, [index]: true }));
+            setXp(prev => prev + 10);
+        }
+    };
+
+    const handleSelectOption = (qIndex: number, option: string, correctAnswer: string) => {
+        setQuizAnswers(prev => ({ ...prev, [qIndex]: option }));
+
+        // Award bonus XP if the answer is correct
+        if (option === correctAnswer) {
+            setXp(prev => prev + 50);
+        } else {
+            setXp(prev => prev + 15); // Consolation XP for trying!
+        }
+    };
+
+    // Calculate level based on XP formula
+    const currentLevel = Math.floor(xp / 200) + 1;
+    const xpTowardsNextLevel = xp % 200;
+
     const opt = {
         margin: 0.5,
         filename: `${selectedChapter}-${contentType}.pdf`,
         image: { type: "jpeg" as const, quality: 0.98 },
-        html2canvas: {
-            scale: 2,
-            useCORS: true
-        },
-        jsPDF: {
-            unit: "in" as const,
-            format: "a4" as const,
-            orientation: "portrait" as const
-        }
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "in" as const, format: "a4" as const, orientation: "portrait" as const }
     };
-
 
     const handleDownloadPDFAll = () => {
         if (!pdfRef.current) return;
-
-        const opt = {
-            margin: 0.5,
-            filename: `${decodedType}-Ch${selectedChapter}.pdf`,
-            image: { type: "jpeg" as const, quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: {
-                unit: "in" as const,
-                format: "a4" as const,
-                orientation: "portrait" as const
-            }
-        };
-
-        html2pdf().set(opt).from(pdfRef.current).save();
+        const completeOpt = { ...opt, filename: `${decodedType}-Ch${selectedChapter}.pdf` };
+        html2pdf().set(completeOpt).from(pdfRef.current).save();
     };
 
     const handleDownloadPDF = () => {
         if (!contentRef.current) return;
-
         html2pdf().set(opt).from(contentRef.current).save();
     };
 
-
-
     const handleDownloadHTML = async () => {
         if (!contentRef.current) return;
-
         const dataUrl = await toPng(contentRef.current);
-
-        const htmlContent = `
-    <html>
-    <body style="text-align:center">
-        <h2>${selectedChapter} - ${contentType}</h2>
-        <img src="${dataUrl}" />
-    </body>
-    </html>
-    `;
-
+        const htmlContent = `<html><body style="text-align:center; font-family: sans-serif; background: #F7FAFC; padding: 20px;"><h2>${selectedChapter} - ${contentType}</h2><img src="${dataUrl}" style="max-width:100%; border-radius:12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" /></body></html>`;
         const blob = new Blob([htmlContent], { type: "text/html" });
-
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = `${selectedChapter}-${contentType}.html`;
         link.click();
     };
 
-
     const MindMapNode = ({ node, level = 0 }: any) => {
         const [open, setOpen] = useState(level < 2);
-
-        const colors = [
-            "blue.500",
-            "green.500",
-            "purple.500",
-            "orange.500",
-            "teal.500",
-        ];
+        const colors = ["brand.500", "teal.400", "purple.400", "pink.400", "orange.400"];
 
         return (
-            <Box ml={level * 4} mt={3} position="relative">
-                {/* 🌿 Connector Line */}
-                {level > 0 && (
-                    <Box
-                        position="absolute"
-                        left="-10px"
-                        top="12px"
-                        width="10px"
-                        height="1px"
-                        bg="gray.400"
-                    />
-                )}
-
-                {/* 🧠 Node Card */}
+            <Box ml={level * 6} mt={3} position="relative">
+                {level > 0 && <Box position="absolute" left="-16px" top="18px" width="16px" height="2px" bg="gray.300" />}
                 <Box
-                    display="inline-block"
-                    px={3}
-                    py={2}
-                    bg={colors[level % colors.length]}
-                    color="white"
-                    borderRadius="lg"
-                    cursor="pointer"
-                    boxShadow="md"
+                    display="inline-flex"
+                    alignItems="center"
+                    px={4} py={2.5}
+                    bg={colors[level % colors.length] || "blue.400"}
+                    color="white" borderRadius="xl" cursor="pointer" boxShadow="sm" fontWeight="bold" fontSize="sm"
                     onClick={() => setOpen(!open)}
-                    _hover={{ transform: "scale(1.05)" }}
-                    transition="0.2s"
+                    _hover={{ transform: "translateY(-1px)", boxShadow: "md" }}
+                    transition="all 0.2s"
                 >
-                    {node.children?.length > 0 && (open ? "▼ " : "▶ ")}
+                    {node.children?.length > 0 && (open ? <ChevronDownIcon mr={1} /> : <ChevronUpIcon mr={1} />)}
                     {node.name}
                 </Box>
-
-                {/* 🌳 Children */}
                 {open && node.children?.length > 0 && (
-                    <Box
-                        borderLeft="2px solid #CBD5E0"
-                        ml={3}
-                        pl={3}
-                        mt={2}
-                    >
+                    <Box borderLeft="2px solid" borderColor="gray.200" ml={4} pl={4} mt={1}>
                         {node.children.map((child: any, idx: number) => (
-                            <MindMapNode
-                                key={idx}
-                                node={child}
-                                level={level + 1}
-                            />
+                            <MindMapNode key={idx} node={child} level={level + 1} />
                         ))}
                     </Box>
                 )}
@@ -222,311 +189,310 @@ const FilterDetails = () => {
         );
     };
 
-
-
-
-
-    if (isLoading) return <Text>Loading chapters...</Text>;
-    if (isError) return <Text>Error loading chapters</Text>;
+    if (isLoading) return <Text p={6} textAlign="center" fontWeight="medium">Loading your study universe...</Text>;
+    if (isError) return <Text p={6} color="red.500" textAlign="center">Error setting up study workspace.</Text>;
 
     return (
-        <Box p={4}>
-            <Text fontSize="lg" fontWeight="bold" mb={4}>
-                Selected: {decodedType}
-            </Text>
+        <Box p={{ base: 4, md: 8 }} maxW="1400px" mx="auto" bg="gray.50" minH="100vh">
 
+            {/* 🎮 GAMIFIED HUB HEADER PANEL */}
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
+                <Box bg="white" p={4} borderRadius="2xl" border="1px solid" borderColor="gray.100" shadow="sm">
+                    <HStack justify="space-between" align="center">
+                        <VStack align="start" spacing={0}>
+                            <Text fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase">Workspace Status</Text>
+                            <Heading size="sm" color="gray.800" fontWeight="black" letterSpacing="tight">
+                                {decodedType || "Revision Area"}
+                            </Heading>
+                        </VStack>
+                        <Tooltip label="Keep studying daily to protect your fire streak!">
+                            <Badge colorScheme="orange" variant="subtle" px={3} py={1.5} borderRadius="xl" fontSize="xs" fontWeight="black">
+                                🔥 {streak} Day Streak
+                            </Badge>
+                        </Tooltip>
+                    </HStack>
+                </Box>
 
+                <Box bg="white" p={4} borderRadius="2xl" border="1px solid" borderColor="gray.100" shadow="sm">
+                    <VStack align="stretch" spacing={1}>
+                        <HStack justify="space-between">
+                            <Text fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase">Rank Level</Text>
+                            <Text fontSize="xs" fontWeight="black" color="blue.600">LVL {currentLevel}</Text>
+                        </HStack>
+                        <HStack spacing={2} align="center">
+                            <Progress value={(xpTowardsNextLevel / 200) * 100} colorScheme="blue" size="sm" borderRadius="full" w="100%" bg="gray.100" />
+                            <Badge colorScheme="blue" borderRadius="md" variant="solid" fontSize="10px">{xp} XP</Badge>
+                        </HStack>
+                    </VStack>
+                </Box>
 
+                <Box bg="white" p={4} borderRadius="2xl" border="1px solid" borderColor="gray.100" shadow="sm">
+                    <VStack align="stretch" spacing={1}>
+                        <HStack justify="space-between">
+                            <Text fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase">Chapter Mastered Progress</Text>
+                            <Text fontSize="xs" fontWeight="black" color={overallProgress === 100 ? "green.500" : "purple.500"}>
+                                {overallProgress}% Complete
+                            </Text>
+                        </HStack>
+                        <Progress value={overallProgress} colorScheme={overallProgress === 100 ? "green" : "purple"} size="sm" borderRadius="full" bg="gray.100" />
+                    </VStack>
+                </Box>
+            </SimpleGrid>
 
-            {/* 🎯 Content Type Buttons */}
-            <Flex gap={3} mb={4} align="center" wrap="wrap">
+            {/* Sticky Action Navigation Filter Dashboard Container */}
+            <Flex
+                bg="white" p={4} borderRadius="2xl" boxShadow="0 4px 20px -4px rgba(160, 174, 192, 0.15)"
+                gap={4} mb={8} align="center" wrap="wrap" position="sticky" top="12px" zIndex={10}
+                backdropFilter="blur(8px)" backgroundColor="rgba(255, 255, 255, 0.95)" border="1px solid" borderColor="gray.100"
+            >
                 <Select
-                    placeholder="Select Chapter"
+                    placeholder="Choose Target Chapter"
                     value={selectedChapter}
                     onChange={(e) => setSelectedChapter(e.target.value)}
-                    mb={4}
+                    maxW={{ base: "100%", md: "240px" }} borderRadius="xl" fontWeight="semibold" borderColor="gray.200"
+                    _hover={{ borderColor: "blue.400" }}
                 >
                     {chapters?.map((ch: string) => (
-                        <option key={ch} value={ch}>
-                            Chapter {ch}
-                        </option>
+                        <option key={ch} value={ch}>Chapter {ch}</option>
                     ))}
-
                 </Select>
+
                 <Button
-                    colorScheme="teal"
-                    onClick={() => fetchChapterDetails()}
-                    isDisabled={!selectedChapter || isCached}
+                    colorScheme="blue" onClick={() => fetchChapterDetails()} isDisabled={!selectedChapter || isCached}
+                    borderRadius="xl" px={6} fontSize="sm" fontWeight="bold"
+                    boxShadow={isCached ? "none" : "0 4px 12px rgba(49, 130, 206, 0.24)"}
                 >
-                    {isCached ? "Loaded ✅" : "Fetch Details"}
+                    {isCached ? "Ready ✅" : "Load Dashboard Data"}
                 </Button>
-                {["Notes", "Mind Map", "Question", "Mind Map2", "Flow Chart", "Venn Diagram"].map((item) => (
-                    <Button
-                        key={item}
-                        onClick={() => setContentType(item)}
-                        colorScheme={contentType === item ? "blue" : "gray"}
-                        variant={contentType === item ? "solid" : "outline"}
-                        borderColor={contentType === item ? "blue.600" : "gray.500"}
-                        borderRadius="full"
-                        isDisabled={!selectedChapter}
-                        boxShadow="xl"
-                    >
-                        {item}
-                    </Button>
-                ))}
+
+                <Divider orientation="vertical" height="30px" display={{ base: "none", md: "block" }} />
+
+                <Flex gap={2} wrap="wrap" flex={1}>
+                    {["Notes", "Mind Map", "Question", "Mind Map2", "Flow Chart", "Venn Diagram"].map((item) => (
+                        <Button
+                            key={item} onClick={() => setContentType(item)}
+                            colorScheme={contentType === item ? "blue" : "gray"}
+                            variant={contentType === item ? "solid" : "ghost"}
+                            borderRadius="xl" size="sm" px={4} fontWeight="bold" isDisabled={!selectedChapter}
+                        >
+                            {item === "Question" ? "Practice Quiz" : item === "Mind Map2" ? "Interactive Tree" : item}
+                        </Button>
+                    ))}
+                </Flex>
 
                 <Menu>
-                    <MenuButton as={Button} colorScheme="purple">
-                        Download ⬇️
+                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />} colorScheme="purple" size="sm" borderRadius="xl" px={4} leftIcon={<DownloadIcon />}>
+                        Export Assets
                     </MenuButton>
-                    <MenuList>
-                        <MenuItem onClick={handleDownloadPDF}>PDF Single Page</MenuItem>
-                        <MenuItem onClick={handleDownloadPDFAll}>PDF Complete Chapter</MenuItem>
-                        <MenuItem onClick={handleDownloadHTML}>HTML</MenuItem>
+                    <MenuList borderRadius="xl" shadow="xl" border="none" p={1}>
+                        <MenuItem onClick={handleDownloadPDF} fontSize="sm" fontWeight="medium" borderRadius="lg">Download Page View (PDF)</MenuItem>
+                        <MenuItem onClick={handleDownloadPDFAll} fontSize="sm" fontWeight="medium" borderRadius="lg">Download Whole Notebook (PDF)</MenuItem>
+                        <MenuItem onClick={handleDownloadHTML} fontSize="sm" fontWeight="medium" borderRadius="lg">Export HTML Layout Canvas</MenuItem>
                     </MenuList>
                 </Menu>
             </Flex>
 
+            {/* Central Content Render Canvas Box */}
             <Box mt={4}>
-                {contentLoading && <Text>Loading content...</Text>}
+                {contentLoading && (
+                    <Text textAlign="center" py={12} color="gray.500" fontSize="sm" fontWeight="medium">
+                        Structuring beautiful assets, hold tight...
+                    </Text>
+                )}
 
                 {contentData && (
                     <div ref={contentRef}>
-
-                        {/* 📘 NOTES VIEW */}
-
+                        {/* 📘 FLASHCARDS / NOTES VIEW CONTAINER */}
                         {contentType === "Notes" && (
-                            <VStack spacing={6} align="stretch" w="100%">
-                                {/* Header Section */}
-                                <HStack justify="space-between" pb={2} borderBottom="2px solid" borderColor="blue.500">
-                                    <Heading size="lg" color="gray.700">Chapter Insights</Heading>
-                                    <Badge colorScheme="blue" variant="subtle" px={3} py={1} borderRadius="full">
-                                        {contentData.notes?.length} Key Points
+                            <VStack spacing={8} align="stretch" w="100%">
+                                <HStack justify="space-between" pb={3} borderBottom="1px solid" borderColor="gray.200">
+                                    <VStack align="start" spacing={0}>
+                                        <Heading size="md" color="gray.800" fontWeight="black">Chapter Core Breakdown</Heading>
+                                        <Text fontSize="xs" color="gray.500">Click cards to reveal targeted exam boosters. Each distinct explore step yields +10 XP!</Text>
+                                    </VStack>
+                                    <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs" fontWeight="bold">
+                                        {contentData.notes?.length || 0} Critical Milestones
                                     </Badge>
                                 </HStack>
 
-                                {/* Notes Grid/List */}
-                                <Box>
-                                    {contentData.notes?.map((item: any, index: number) => (
-                                        <Box
-                                            key={index}
-                                            position="relative"
-                                            p={6}
-                                            mb={5}
-                                            bg="white"
-                                            borderRadius="xl"
-                                            borderWidth="1px"
-                                            borderColor="gray.100"
-                                            boxShadow="sm"
-                                            transition="all 0.2s"
-                                            _hover={{
-                                                boxShadow: "xl",
-                                                transform: "translateY(-2px)",
-                                                borderColor: "blue.200"
-                                            }}
-                                        >
-                                            {/* Decorative Side Bar */}
+                                <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={6}>
+                                    {contentData.notes?.map((item: any, index: number) => {
+                                        const isFlipped = !!flippedCards[index];
+                                        const hasRead = !!readCards[index];
+                                        return (
                                             <Box
-                                                position="absolute"
-                                                left={0}
-                                                top={0}
-                                                bottom={0}
-                                                w="4px"
-                                                bgGradient="linear(to-b, blue.400, purple.500)"
-                                                borderTopLeftRadius="xl"
-                                                borderBottomLeftRadius="xl"
-                                            />
+                                                key={index} bg="white" borderRadius="2xl" p={6}
+                                                border="1px solid" borderColor={isFlipped ? "blue.200" : (hasRead ? "green.100" : "gray.100")}
+                                                boxShadow="0 4px 6px -1px rgba(0,0,0,0.02)" position="relative"
+                                                transition="all 0.25s" cursor="pointer"
+                                                onClick={() => toggleCard(index)}
+                                                _hover={{ boxShadow: "0 12px 24px -4px rgba(160, 174, 192, 0.2)", transform: "translateY(-3px)" }}
+                                            >
+                                                <Box position="absolute" left={0} top={0} bottom={0} w="5px" bgGradient="linear(to-b, blue.400, purple.400)" borderTopLeftRadius="2xl" borderBottomLeftRadius="2xl" />
 
-                                            <HStack spacing={4} align="flex-start">
-                                                <Box
-                                                    bg="blue.50"
-                                                    color="blue.600"
-                                                    borderRadius="full"
-                                                    p={2}
-                                                    minW="40px"
-                                                    textAlign="center"
-                                                    fontWeight="bold"
-                                                >
-                                                    {index + 1}
-                                                </Box>
-
-                                                <VStack align="start" spacing={2}>
-                                                    <Text fontWeight="extrabold" fontSize="lg" color="gray.800">
-                                                        {item.note}
-                                                    </Text>
-                                                    <Divider />
-                                                    <Text color="gray.600" lineHeight="tall" fontSize="md">
-                                                        {item.explanation}
-                                                    </Text>
+                                                <VStack align="stretch" spacing={4}>
+                                                    <Flex justify="space-between" align="center">
+                                                        <HStack spacing={3}>
+                                                            <Flex bg={hasRead ? "green.50" : "blue.50"} color={hasRead ? "green.600" : "blue.600"} h="32px" w="32px" align="center" justify="center" borderRadius="xl" fontWeight="black" fontSize="sm">
+                                                                {hasRead ? "✓" : index + 1}
+                                                            </Flex>
+                                                            <Text fontWeight="extrabold" fontSize="md" color="gray.800" maxW="80%">
+                                                                {item.note}
+                                                            </Text>
+                                                        </HStack>
+                                                        <Tag size="sm" colorScheme={isFlipped ? "purple" : "gray"} borderRadius="full" fontWeight="bold">
+                                                            {isFlipped ? "Technical Parameters" : "Explanation"}
+                                                        </Tag>
+                                                    </Flex>
+                                                    <Divider borderColor="gray.100" />
+                                                    {!isFlipped ? (
+                                                        <Text color="gray.600" lineHeight="relaxed" fontSize="sm" minH="54px">
+                                                            {item.explanation}
+                                                        </Text>
+                                                    ) : (
+                                                        <VStack align="stretch" spacing={3} minH="54px" bg="gray.50" p={3} borderRadius="xl">
+                                                            {item.examKeywords && (
+                                                                <Box>
+                                                                    <Text fontSize="xs" fontWeight="black" color="gray.500" textTransform="uppercase" mb={1.5}>Target Exam Keywords</Text>
+                                                                    <Flex gap={1.5} flexWrap="wrap">
+                                                                        {item.examKeywords.map((kw: string, i: number) => (
+                                                                            <Tag key={i} size="sm" colorScheme="teal" borderRadius="md" fontWeight="bold"><TagLabel>{kw}</TagLabel></Tag>
+                                                                        ))}
+                                                                    </Flex>
+                                                                </Box>
+                                                            )}
+                                                            {item.marksBoosterTip && (
+                                                                <Box borderTop="1px dashed" borderColor="gray.200" pt={2}>
+                                                                    <Text fontSize="xs" fontWeight="black" color="orange.600" textTransform="uppercase" mb={0.5}>🚀 Strategic Marks Booster Point</Text>
+                                                                    <Text fontSize="xs" color="gray.600" fontWeight="medium">{item.marksBoosterTip}</Text>
+                                                                </Box>
+                                                            )}
+                                                        </VStack>
+                                                    )}
                                                 </VStack>
-                                            </HStack>
-                                        </Box>
-                                    ))}
-                                </Box>
-
-                                {/* 🧾 Enhanced Summary Section */}
-                                {contentData.summary && (
-                                    <Box
-                                        mt={8}
-                                        p={8}
-                                        bgGradient="linear(to-br, gray.50, white)"
-                                        borderRadius="2xl"
-                                        borderWidth="1px"
-                                        borderStyle="dashed"
-                                        borderColor="gray.300"
-                                        position="relative"
-                                    >
-                                        <HStack mb={4}>
-                                            <Icon as={StarIcon} color="orange.400" />
-                                            <Heading size="md" color="gray.700">Quick Recap</Heading>
-                                        </HStack>
-                                        <Text fontSize="lg" color="gray.700" fontStyle="italic" letterSpacing="wide">
-                                            "{contentData.summary}"
-                                        </Text>
-                                    </Box>
-                                )}
+                                            </Box>
+                                        );
+                                    })}
+                                </SimpleGrid>
                             </VStack>
                         )}
 
-                        {/* 🧠 MIND MAP VIEW */}
+                        {/* ❓ ACTIVE QUIZ PRACTICE WINDOW */}
+                        {contentType === "Question" && (
+                            <VStack spacing={6} align="stretch" w="100%">
+                                <VStack align="start" spacing={0} pb={2} borderBottom="1px solid" borderColor="gray.200">
+                                    <Heading size="md" color="gray.800" fontWeight="black">Active Recall Knowledge Check</Heading>
+                                    <Text fontSize="xs" color="gray.500">Test your mastery! Correct answers reward a massive +50 XP bonus layout hit.</Text>
+                                </VStack>
+
+                                <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+                                    {contentData.questions?.map((q: any, index: number) => {
+                                        const selectedOption = quizAnswers[index];
+                                        const hasAnswered = selectedOption !== undefined;
+                                        const isCorrect = selectedOption === q.answer;
+
+                                        return (
+                                            <Box
+                                                key={index} bg="white" p={6} borderRadius="2xl" shadow="sm"
+                                                border="1px solid" borderColor={hasAnswered ? (isCorrect ? "green.200" : "red.200") : "gray.100"}
+                                            >
+                                                <VStack align="stretch" spacing={4}>
+                                                    <HStack align="start" spacing={3}>
+                                                        <Flex bg={hasAnswered ? (isCorrect ? "green.500" : "red.500") : "blue.500"} color="white" minW="28px" h="28px" borderRadius="lg" align="center" justify="center" fontSize="xs" fontWeight="black">
+                                                            Q{index + 1}
+                                                        </Flex>
+                                                        <Text fontWeight="extrabold" fontSize="sm" color="gray.800">
+                                                            {q.question}
+                                                        </Text>
+                                                    </HStack>
+
+                                                    <VStack align="stretch" spacing={2.5}>
+                                                        {q.options.map((option: string, i: number) => {
+                                                            const isSelected = selectedOption === option;
+                                                            let optionBg = "gray.50";
+                                                            let optionBorderColor = "gray.200";
+
+                                                            if (isSelected) {
+                                                                optionBg = isCorrect ? "green.50" : "red.50";
+                                                                optionBorderColor = isCorrect ? "green.500" : "red.500";
+                                                            } else if (hasAnswered && option === q.answer) {
+                                                                optionBg = "green.50";
+                                                                optionBorderColor = "green.300";
+                                                            }
+
+                                                            return (
+                                                                <Flex
+                                                                    key={i} align="center" px={4} py={3} borderRadius="xl" border="2px solid"
+                                                                    borderColor={optionBorderColor} bg={optionBg}
+                                                                    cursor={hasAnswered ? "not-allowed" : "pointer"}
+                                                                    fontWeight="semibold" fontSize="xs" transition="all 0.15s"
+                                                                    onClick={() => !hasAnswered && handleSelectOption(index, option, q.answer)}
+                                                                    _hover={hasAnswered ? {} : { bg: "blue.50", borderColor: "blue.300" }}
+                                                                >
+                                                                    <Box mr={3} h="6px" w="6px" borderRadius="full" bg={isSelected ? "currentColor" : "gray.400"} />
+                                                                    <Text flex={1}>{option}</Text>
+                                                                </Flex>
+                                                            );
+                                                        })}
+                                                    </VStack>
+                                                    <Collapse in={hasAnswered} animateOpacity>
+                                                        <HStack p={3} borderRadius="xl" bg={isCorrect ? "green.50" : "red.50"} color={isCorrect ? "green.800" : "red.800"} fontSize="xs" fontWeight="bold">
+                                                            <Icon as={isCorrect ? CheckCircleIcon : WarningIcon} />
+                                                            <Text>{isCorrect ? "Splendid! +50 XP Collected." : `Review Needed! Correct target item parameter is: ${q.answer}`}</Text>
+                                                        </HStack>
+                                                    </Collapse>
+                                                </VStack>
+                                            </Box>
+                                        );
+                                    })}
+                                </SimpleGrid>
+                            </VStack>
+                        )}
+
+                        {/* Other visual elements render standard views layout safely */}
                         {contentType === "Mind Map" && (
-                            <Box p={4} borderWidth="1px" borderRadius="md">
-                                <Text fontWeight="bold" mb={2}>
-                                    Mind Map
-                                </Text>
-                                <Text whiteSpace="pre-wrap" fontFamily="monospace">
-                                    {contentData.mindMap}
-                                </Text>
+                            <Box p={6} bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="2xl" boxShadow="sm">
+                                <Box bg="gray.900" p={4} borderRadius="xl" overflowX="auto">
+                                    <Text whiteSpace="pre-wrap" fontFamily="mono" color="green.300" fontSize="xs">{contentData.mindMap}</Text>
+                                </Box>
                             </Box>
                         )}
 
                         {contentType === "Mind Map2" && contentData.mindMap && (
-                            <Box
-                                p={5}
-                                borderWidth="1px"
-                                borderRadius="xl"
-                                bg="gray.50"
-                                overflowX="auto"
-                            >
-                                <Text fontWeight="bold" mb={3}>
-                                    Mind Map
-                                </Text>
-
+                            <Box p={6} bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="2xl" overflowX="auto">
                                 <MindMapNode node={parseMindMap(contentData.mindMap)} />
                             </Box>
                         )}
 
-
                         {contentType === "Flow Chart" && contentData?.mindMap && (
-                            <Box
-                                height="600px"
-                                width="100%"
-                                borderWidth="1px"
-                                borderRadius="2xl"
-                                bg="gray.50"
-                                position="relative"
-                                boxShadow="inner"
-                                overflow="hidden"
-                            >
-                                {/* 1. Wrap everything in the Provider */}
+                            <Box height="620px" w="100%" borderWidth="1px" borderColor="gray.200" borderRadius="2xl" bg="white" position="relative" overflow="hidden">
                                 <ReactFlowProvider>
-
-                                    <ReactFlow
-                                        nodes={flowData.nodes}
-                                        edges={flowData.edges}
-                                        nodeTypes={nodeTypes}
-                                        fitView
-                                        onInit={(instance) => setTimeout(() => instance.fitView(), 100)}
-                                    >
-                                        <Background variant={BackgroundVariant.Lines} color="#E2E8F0" gap={20} />
-                                        <Controls style={{ borderRadius: '10px', overflow: 'hidden' }} />
-                                        <MiniMap
-                                            nodeColor={(n) => n.data.levelColor}
-                                            maskColor="rgba(247, 250, 252, 0.7)"
-                                            style={{ borderRadius: '10px' }}
-                                        />
+                                    <ReactFlow nodes={flowData.nodes} edges={flowData.edges} nodeTypes={nodeTypes} fitView onInit={(ins) => setTimeout(() => ins.fitView(), 120)}>
+                                        <Background variant={BackgroundVariant.Dots} color="#CBD5E0" gap={24} size={1} />
+                                        <Controls />
+                                        <MiniMap />
                                     </ReactFlow>
-
-                                    {/* 2. Place your custom ControlPanel inside the Provider, 
-                   but outside the ReactFlow component itself so it floats */}
                                     <FlowChartControlPanel />
-
                                 </ReactFlowProvider>
-
-                                {/* Floating Legend */}
-                                <Box position="absolute" top={4} right={4} bg="whiteAlpha.800" p={2} borderRadius="md" shadow="sm">
-                                    <Text fontSize="xs" color="gray.500" fontWeight="bold">Interactive View: Drag to explore</Text>
-                                </Box>
                             </Box>
                         )}
 
-                        {/* ❓ QUESTIONS VIEW */}
-                        {contentType === "Question" && (
-                            <Box>
-                                {contentData.questions?.map((q: any, index: number) => (
-                                    <Box
-                                        key={index}
-                                        p={4}
-                                        mb={4}
-                                        borderWidth="1px"
-                                        borderRadius="md"
-                                    >
-                                        <Text fontWeight="bold">
-                                            Q{index + 1}. {q.question}
-                                        </Text>
-
-                                        {q.options.map((opt: string, i: number) => (
-                                            <Text key={i} ml={4}>
-                                                • {opt}
-                                            </Text>
-                                        ))}
-
-                                        <Text mt={2} color="green.600">
-                                            ✅ Answer: {q.answer}
-                                        </Text>
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
-
-                        {/* 📊 VENN DIAGRAM VIEW */}
                         {contentType === "Venn Diagram" && (
-                            <Box
-                                p={5}
-                                borderWidth="1px"
-                                borderRadius="xl"
-                                bg="white"
-                                boxShadow="inner"
-                                minH="500px"
-                            >
-                                <Text fontWeight="bold" fontSize="xl" mb={5} textAlign="center">
-                                    Comparison Diagram
-                                </Text>
-
-                                {contentData?.vennDiagram ? (
-                                    <VennView data={contentData.vennDiagram} />
-                                ) : (
-                                    <Text color="red.500" textAlign="center">
-                                        No Venn Diagram data available for this chapter.
-                                    </Text>
-                                )}
+                            <Box p={6} bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="2xl" minH="500px">
+                                {contentData?.vennDiagram ? <VennView data={contentData.vennDiagram} /> : <Text textAlign="center" pt={10} color="gray.400" fontWeight="bold">No diagram maps set here.</Text>}
                             </Box>
                         )}
-
                     </div>
                 )}
             </Box>
+
             <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
                 <div ref={pdfRef}>
-                    <PdfLayout
-                        contentData={contentData}
-                        selectedChapter={selectedChapter}
-                    />
+                    <PdfLayout contentData={contentData} selectedChapter={selectedChapter} />
                 </div>
             </div>
         </Box>
     );
 };
-
 
 export default FilterDetails;
